@@ -6,7 +6,7 @@ if [[ -n "$__GREP_ALIAS_CACHES" ]]; then
     source "$__GREP_CACHE_FILE"
 else
     grep-flags-available() {
-        command grep "$@" "" &>/dev/null <<< ""
+        command rg "$@" "" &>/dev/null <<< ""
     }
 
     # Ignore these folders (if the necessary grep flags are available)
@@ -15,21 +15,22 @@ else
     # Check for --exclude-dir, otherwise check for --exclude. If --exclude
     # isn't available, --color won't be either (they were released at the same
     # time (v2.5): https://git.savannah.gnu.org/cgit/grep.git/tree/NEWS?id=1236f007
+    # or use glob for ripgrep
     if grep-flags-available --color=auto --exclude-dir=.cvs; then
         GREP_OPTIONS="--color=auto --exclude-dir=$EXC_FOLDERS"
     elif grep-flags-available --color=auto --exclude=.cvs; then
         GREP_OPTIONS="--color=auto --exclude=$EXC_FOLDERS"
+    elif grep-flags-available --color=auto --glob=!.cvs; then
+        GREP_OPTIONS="--color=auto --glob=!$EXC_FOLDERS"
     fi
 
     if [[ -n "$GREP_OPTIONS" ]]; then
         # export grep, egrep and fgrep settings
-        alias grep="grep $GREP_OPTIONS"
-        alias egrep="grep -E $GREP_OPTIONS"
-        alias fgrep="grep -F $GREP_OPTIONS"
+        alias grep="rg $GREP_OPTIONS"
 
         # write to cache file if cache directory is writable
         if [[ -w "$ZSH_CACHE_DIR" ]]; then
-            alias -L grep egrep fgrep >| "$__GREP_CACHE_FILE"
+            alias -L grep >| "$__GREP_CACHE_FILE"
         fi
     fi
 
